@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ja" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <title>NextHub - Mono Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&q=80">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+        
+        :root { 
+            --bg-main: #0a0a0c;         
+            --bg-panel: #111114;        
+            --bg-input: #16161a;        
+            --text-main: #ffffff;       
+            --text-sub: #8e8e93;        
+            --border: rgba(255, 255, 255, 0.06); 
+            --accent: #ffffff;
+        }
+
+        * { 
+            font-family: 'Inter', 'Noto Sans JP', sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+
+        body { 
+            background-color: var(--bg-main); 
+            color: var(--text-main); 
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        /* ヘッダー */
+        header { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 60px; 
+            background-color: rgba(10, 10, 12, 0.7); 
+            border-bottom: 1px solid var(--border); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 9999; 
+        }
+
+        .header-nav-trigger { 
+            display: flex; 
+            align-items: center; 
+            cursor: pointer; 
+            padding: 6px 16px;
+            border-radius: 12px;
+            transition: background 0.2s;
+        }
+        .header-nav-trigger:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        #logo { 
+            height: 24px; 
+            width: 24px; 
+            background: #ffffff;
+            border-radius: 6px; 
+            margin-right: 12px; 
+            border: 1px solid var(--border);
+        }
+
+        header h1 { 
+            font-size: 15px; 
+            font-weight: 500; 
+            letter-spacing: 1.5px; 
+            text-transform: uppercase;
+        }
+
+        #mode-badge { 
+            font-size: 10px; 
+            background: rgba(255, 255, 255, 0.08); 
+            color: var(--text-main); 
+            padding: 2px 8px; 
+            border-radius: 6px; 
+            margin-left: 12px; 
+            font-weight: 500; 
+            letter-spacing: 0.5px;
+            border: 1px solid var(--border);
+        }
+
+        main { margin-top: 60px; }
+        
+        /* ボタン */
+        .btn { 
+            display: inline-block; 
+            color: #000000; 
+            background-color: #ffffff; 
+            margin: 10px 6px; 
+            padding: 12px 28px; 
+            border-radius: 10px; 
+            text-decoration: none; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: 500; 
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+        .btn:hover { 
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* セクション構造 */
+        #top { 
+            height: calc(100vh - 60px); 
+            display: flex; 
+            flex-direction: column; 
+            text-align: center; 
+            justify-content: center; 
+            padding: 20px; 
+            background: radial-gradient(circle at center, #16161a 0%, #0a0a0c 100%);
+        }
+        
+        #top h1 { 
+            font-size: 11vmin; 
+            font-weight: 700;
+            line-height: 1.1; 
+            margin-bottom: 15px; 
+            letter-spacing: -2px;
+        }
+
+        .section-flex { 
+            display: flex; 
+            min-height: 70vh; 
+            align-items: center; 
+            padding: 80px 10%; 
+            gap: 60px;
+            background-color: var(--bg-main); 
+        }
+        .section-flex > div { width: 50%; }
+        
+        .left-text h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.5px; }
+        .left-text p { font-size: 1rem; line-height: 1.8; color: var(--text-sub); }
+
+        .flex-image-container {
+            height: 380px; 
+            border-radius: 16px; 
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: var(--bg-panel);
+        }
+
+        /* 機能詳細 */
+        #details { padding: 100px 10%; background-color: var(--bg-panel); border-top: 1px solid var(--border); }
+        .feature-container { display: flex; gap: 32px; margin-top: 40px; }
+        .feature-nav { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        
+        .nav-item { 
+            padding: 14px 20px; 
+            border: 1px solid var(--border); 
+            border-radius: 10px; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            background: rgba(255, 255, 255, 0.02); 
+            color: var(--text-sub); 
+            font-size: 0.9rem;
+            font-weight: 400;
+            text-align: left;
+        }
+        .nav-item:hover { 
+            background: rgba(255, 255, 255, 0.04); 
+            color: var(--text-main);
+        }
+        .nav-item.active { 
+            background: rgba(255, 255, 255, 0.06); 
+            color: var(--text-main); 
+            border-color: rgba(255, 255, 255, 0.2); 
+            font-weight: 500; 
+        }
+
+        .feature-display { 
+            flex: 2; 
+            padding: 40px; 
+            min-height: 320px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        #display-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 12px; }
+        #display-desc { font-size: 0.95rem; color: var(--text-sub); line-height: 1.7; }
+
+        /* 概要（グリッド・リスト） */
+        #more { padding: 100px 10%; background-color: var(--bg-main); border-top: 1px solid var(--border); }
+        
+        #grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 35px; }
+        .grid-box { 
+            background: var(--bg-panel); 
+            padding: 30px 20px; 
+            border-radius: 12px; 
+            text-align: center; 
+            border: 1px solid var(--border); 
+            transition: border-color 0.2s;
+        }
+        .grid-box:hover { border-color: rgba(255, 255, 255, 0.15); }
+        .grid-box h3 { font-size: 1rem; font-weight: 500; }
+
+        .list-box { 
+            background: var(--bg-panel); 
+            margin-bottom: 8px; 
+            padding: 16px 20px; 
+            border-radius: 10px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            border: 1px solid var(--border); 
+        }
+        .list-box strong { font-weight: 400; font-size: 0.95rem; }
+        .list-box span { font-size: 0.75rem; background: rgba(255, 255, 255, 0.06); padding: 3px 8px; border-radius: 4px; color: var(--text-sub); border: 1px solid var(--border); }
+
+        /* 共有WIKIセクション */
+        .wiki-section {
+            padding: 80px 10%; 
+            background-color: var(--bg-main); 
+            min-height: calc(100vh - 60px);
+        }
+
+        .wiki-input, .wiki-textarea { 
+            width: 100%; 
+            padding: 12px 14px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border); 
+            background: var(--bg-input); 
+            color: var(--text-main); 
+            font-size: 0.9rem; 
+            margin-bottom: 14px; 
+            transition: border-color 0.2s;
+        }
+        .wiki-input:focus, .wiki-textarea:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .wiki-textarea { height: 260px; resize: vertical; line-height: 1.7; font-family: inherit; }
+        
+        .wiki-display-content { font-size: 0.95rem; color: #e4e4e7; line-height: 1.8; }
+        .wiki-display-content img { max-width: 100%; height: auto; border-radius: 12px; margin: 20px 0; display: block; border: 1px solid var(--border); }
+        .wiki-display-content ul { margin-left: 20px; margin-bottom: 20px; }
+        .wiki-display-content li { margin-bottom: 6px; list-style-type: square; color: var(--text-sub); }
+        
+        .wiki-separator { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; background: var(--bg-main); width: 100%; }
+        .wiki-separator-title { background: var(--bg-input); padding: 12px 18px; font-weight: 500; font-size: 0.9rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+        .wiki-separator-title:hover { background: rgba(255,255,255,0.02); }
+        .wiki-separator-body { padding: 16px 18px; display: none; border-top: 1px solid var(--border); background: var(--bg-main); color: var(--text-sub); }
+        .wiki-separator.open .wiki-separator-body { display: block; }
+        
+        .wiki-code-block { font-family: monospace; background: #000000; padding: 14px 18px; border-radius: 8px; color: #a7f3d0; margin: 18px 0; overflow-x: auto; white-space: pre-wrap; font-size: 0.85rem; border: 1px solid var(--border); border-left: 2px solid #fff; }
+        .wiki-help-box { background: rgba(255,255,255,0.01); padding: 16px; border-radius: 10px; border: 1px dashed var(--border); margin-top: 20px; font-size: 0.8rem; color: var(--text-sub); line-height: 1.6; }
+
+        .fade-in { animation: fadeIn 0.25s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        
+        footer { padding: 40px; text-align: center; font-size: 12px; border-top: 1px solid var(--border); background-color: var(--bg-panel); color: #52525b; letter-spacing: 0.5px; }
+
+        @media (max-width: 768px) { 
+            .feature-container { flex-direction: column; } 
+            .section-flex { flex-direction: column; height: auto !important; padding: 60px 5% !important; gap: 32px; } 
+            .section-flex > div { width: 100% !important; } 
+            .flex-image-container { height: 240px; }
+            .feature-display { padding: 24px; }
+            #top h1 { font-size: 13vmin; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-nav-trigger" onclick="toggleMainPage()">
+            <div id="logo"></div>
+            <h1>NextHub</h1>
+            <span id="mode-badge">HOME</span>
+        </div>
+    </header>
+
+    <main>
+        <div id="page-home">
+            <section id="top">
+                <div id="top-text-content">
+                    <h1>NextHub Mono</h1>
+                    <h4 style="color: var(--text-sub); font-weight: 400; letter-spacing: 0.5px; font-size: 14px;">Next-generation Minimal Browser & Portal System.</h4>
+                    <h3 style="font-size: 4vmin; margin-top: 20px; color: #fff; font-weight: 400; letter-spacing: -0.5px;">無駄を削ぎ落とし、美しさと機能性を極限まで高めた統合UI環境</h3>
+                    <div style="margin-top: 30px;">
+                        <a href="https://github.com/NextHub-Mono" class="btn">Explore GitHub</a>
+                        <button class="btn" onclick="toggleMainPage()" style="background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.25);">Documentation Wiki</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section-flex">
+                <div class="left-text">
+                    <h1>Aesthetic Control.</h1>
+                    <p>NextHubは、モノトーンを基調とした洗練されたデザイン言語と、高速なレンダリングエコシステムを提供するポータルプロジェクトです。あらゆる無駄な要素や過剰な配色を排除し、コンテンツ本来の姿を際立たせます。</p>
+                </div>
+                <div class="flex-image-container">
+                    <div style="width:100%; height:100%; background: linear-gradient(135deg, #111114 0%, #1a1a22 100%); display:flex; align-items:center; justify-content:center; color: var(--text-sub); font-size: 0.9rem; letter-spacing: 2px;">[ PREVIEW INTERACTION ]</div>
+                </div>
+            </section>
+
+            <section id="details">
+                <div style="text-align: center; margin-bottom: 16px;">
+                    <h2 style="font-size: 1.8rem; font-weight: 700; letter-spacing: -0.5px;">Core Specifications</h2>
+                    <p style="color: var(--text-sub); font-size: 0.9rem; margin-top: 4px;">NextHubを構成する高度な設計思想</p>
+                </div>
+                <div class="feature-container">
+                    <div class="feature-nav" id="nav-buttons"></div>
+                    <div class="feature-display" id="display-panel">
+                        <div id="display-content" class="fade-in">
+                            <h1 id="display-title">仕様を選択</h1>
+                            <p id="display-desc">ここに詳細が表示されます。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="more">
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <h2 style="font-size: 1.8rem; font-weight: 700; letter-spacing: -0.5px;">System Modules</h2>
+                    <div style="margin-top: 20px; background: rgba(255,255,255,0.03); padding: 4px; border-radius: 12px; display: inline-block; border: 1px solid var(--border);">
+                        <button class="btn" onclick="renderView('grid')" id="btn-grid" style="margin:0; padding: 8px 20px; border-radius: 8px; font-size:0.85rem;">グリッド</button>
+                        <button class="btn" onclick="renderView('list')" id="btn-list" style="margin:0; padding: 8px 20px; border-radius: 8px; font-size:0.85rem; background: transparent; color: var(--text-main); box-shadow:none;">リスト</button>
+                    </div>
+                </div>
+                <div id="view-target" class="fade-in"></div>
+            </section>
+        </div>
+
+        <div id="page-wiki" style="display: none;">
+            <section class="wiki-section">
+                <div style="text-align: center; margin-bottom: 40px;">
+                    <h2 style="font-size: 2rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 12px;">NextHub Docs Wiki</h2>
+                    <div id="auth-status-container" class="auth-buttons">
+                        <button id="btn-google-login" class="btn" style="background:#ffffff; color:#000000; padding: 10px 20px; font-size:13px; margin: 0 5px; border-radius: 8px;">Sign in with Google</button>
+                        <span id="user-info" style="color:var(--text-sub); font-size:13px; display:none;"></span>
+                        <button id="btn-discord-logout" class="btn" style="background:transparent; color:#ef4444; border: 1px solid rgba(239,68,68,0.3); padding: 5px 12px; font-size:12px; display:none; margin: 0 5px;">Sign out</button>
+                    </div>
+                </div>
+
+                <div class="feature-container">
+                    <div class="feature-nav">
+                        <input type="text" id="wiki-search" placeholder="ドキュメントを検索..." class="wiki-input">
+                        <div id="wiki-page-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+                        <hr style="border-color: var(--border); margin: 16px 0;">
+                        <button id="btn-create-page" class="btn" onclick="prepareNewPage()" style="margin: 0; width: 100%; display:none; background: #fff; color: #000; border-radius: 8px;">＋ 新規記事を作成</button>
+                        <p id="login-alert-text" style="color: var(--text-sub); font-size:12px; text-align:center;">※ 記事の編集・作成にはログインが必要です</p>
+                    </div>
+
+                    <div class="feature-display" style="padding: 40px; justify-content: flex-start; background: rgba(255,255,255,0.01);">
+                        <div id="wiki-view-mode" style="width: 100%; text-align: left;">
+                            <h1 id="wiki-title" style="font-size: 1.8rem; font-weight: 700; margin-bottom: 6px;">Developer Documentation</h1>
+                            <div id="wiki-author" style="font-size:12px; color: var(--text-sub); margin-bottom: 24px;"></div>
+                            <div id="wiki-content" class="wiki-display-content">左側のメニューから仕様ドキュメントを選択してください。</div>
+                            <div style="margin-top: 32px;">
+                                <button id="btn-wiki-edit" class="btn" style="display: none; margin: 0; background: var(--text-main); color: #000; border-radius: 8px;" onclick="enableEditMode()">このドキュメントを編集</button>
+                                <p id="edit-lock-msg" style="color:#f87171; font-size:12px; display:none; margin-top:12px;">⚠️ このドキュメントは作成した開発者のみ編集可能です。</p>
+                            </div>
+                        </div>
+
+                        <div id="wiki-edit-mode" style="display: none; width: 100%;">
+                            <input type="text" id="edit-wiki-title" placeholder="ドキュメントタイトル" class="wiki-input" style="font-size: 1.1rem; font-weight: 500;">
+                            <textarea id="edit-wiki-content" placeholder="マークアップ形式で入力..." class="wiki-textarea"></textarea>
+                            
+                            <div class="wiki-help-box">
+                                <strong style="color: #fff; display: block; margin-bottom: 4px;">💡 構文ルール:</strong>
+                                <span style="display:block; margin-bottom: 2px;">🔹 <strong>**太字**</strong> | <em>*斜体*</em> | <del>~~打ち消し~~</del> | [img:画像URL]</span>
+                                <span>🔹 リスト: 行頭に <code>* </code> | 折りたたみ: <code>[title:題名]本文[end]</code> | コード: <code>```コード```</code></span>
+                            </div>
+
+                            <div style="margin-top: 20px; text-align: left;">
+                                <button class="btn" onclick="saveWikiPage()" style="margin-left: 0; border-radius: 8px;">変更を保存</button>
+                                <button class="btn" style="background: transparent; color: var(--text-main); border: 1px solid var(--border); box-shadow: none; border-radius: 8px;" onclick="cancelEdit()">キャンセル</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer><p>Copyright © 2026 NextHub Mono Project. Open Source Core.</p></footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAWJ8gxMBqlCH-HGccXb-PpwM7xWVghUNg",
+            authDomain: "my-ball-wiki.firebaseapp.com",
+            projectId: "my-ball-wiki",
+            storageBucket: "my-ball-wiki.firebasestorage.app",
+            messagingSenderId: "1004863748430",
+            appId: "1:1004863748430:web:584e16403e2eb87c90861f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        const googleProvider = new GoogleAuthProvider();
+        let currentPages = [], selectedPageId = null, currentUser = null;
+
+        document.getElementById('btn-google-login').onclick = () => signInWithPopup(auth, googleProvider).catch(e => console.error(e));
+        document.getElementById('btn-discord-logout').onclick = () => signOut(auth);
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            const googleBtn = document.getElementById('btn-google-login');
+            const logoutBtn = document.getElementById('btn-discord-logout');
+            const userInfo = document.getElementById('user-info');
+            const createBtn = document.getElementById('btn-create-page');
+            const alertTxt = document.getElementById('login-alert-text');
+
+            if (user) {
+                googleBtn.style.display = 'none';
+                logoutBtn.style.display = 'inline-block';
+                userInfo.style.display = 'inline';
+                userInfo.innerText = `Developer: ${user.displayName || 'Guest'} `;
+                createBtn.style.display = 'block';
+                alertTxt.style.display = 'none';
+            } else {
+                googleBtn.style.display = 'inline-block';
+                logoutBtn.style.display = 'none';
+                userInfo.style.display = 'none';
+                createBtn.style.display = 'none';
+                alertTxt.style.display = 'block';
+            }
+            if(selectedPageId) selectWikiPage(selectedPageId);
+        });
+
+        window.toggleMainPage = function() {
+            const h = document.getElementById('page-home'), w = document.getElementById('page-wiki'), b = document.getElementById('mode-badge');
+            if (h.style.display !== 'none') { h.style.display = 'none'; w.style.display = 'block'; b.innerText = "WIKI"; loadWikiPages(); }
+            else { h.style.display = 'block'; w.style.display = 'none'; b.innerText = "HOME"; }
+        }
+
+        function parseWikiText(text) {
+            if (!text) return "";
+            let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            html = html.replace(/```([\s\S]*?)```/g, '<div class="wiki-code-block">$1</div>');
+            html = html.replace(/\[title:(.+?)\]([\s\S]*?)\[end\]/g, (m, t, b) => `<div class="wiki-separator" onclick="this.classList.toggle('open'); event.stopPropagation();"><div class="wiki-separator-title">${t}</div><div class="wiki-separator-body">${b}</div></div>`);
+            html = html.replace(/\[img:(.+?)\]/g, '<img src="$1" alt="Wiki Image" loading="lazy">');
+            html = html.replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>').replace(/\*([\s\S]+?)\*/g, '<em>$1</em>').replace(/~~([\s\S]+?)~~/g, '<del>$1</del>');
+            
+            let lines = html.split('\n'), inList = false;
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].trim().indexOf('* ') === 0) {
+                    let c = lines[i].replace(/^\s*\* /, '');
+                    lines[i] = !inList ? '<ul><li>' + c + '</li>' : '<li>' + c + '</li>';
+                    inList = true;
+                } else {
+                    if (inList) { lines[i - 1] += '</ul>'; inList = false; }
+                    if (!lines[i].includes('</div>') && !lines[i].includes('</li>')) lines[i] += '<br>';
+                }
+            }
+            if (inList) lines[lines.length - 1] += '</ul>';
+            return lines.join('\n');
+        }
+
+        async function loadWikiPages() {
+            const target = document.getElementById('wiki-page-list');
+            target.innerHTML = "<p style='color:#888; font-size:14px;'>Syncing...</p>";
+            try {
+                // コレクション名をNextHubドキュメントの共通構造として扱う（既存データ利用可）
+                const q = query(collection(db, "wiki"), orderBy("title", "asc"));
+                const snap = await getDocs(q);
+                currentPages = [];
+                snap.forEach(d => currentPages.push({ id: d.id, ...d.data() }));
+                renderPageList(currentPages);
+            } catch (e) { target.innerHTML = "<p style='color:#ff4444;'>Sync failed</p>"; }
+        }
+
+        function renderPageList(pages) {
+            const target = document.getElementById('wiki-page-list'); target.innerHTML = "";
+            if(pages.length === 0) { target.innerHTML = "<p style='color:#888; padding:10px; font-size:14px;'>No docs found.</p>"; return; }
+            pages.forEach(p => {
+                const div = document.createElement('div'); div.className = 'nav-item'; div.style.padding = '12px 20px'; div.innerText = p.title;
+                if(selectedPageId === p.id) div.classList.add('active');
+                div.onclick = () => selectWikiPage(p.id);
+                target.appendChild(div);
+            });
+        }
+
+        document.getElementById('wiki-search').addEventListener('input', (e) => {
+            const k = e.target.value.toLowerCase();
+            renderPageList(currentPages.filter(p => p.title.toLowerCase().includes(k) || p.content.toLowerCase().includes(k)));
+        });
+
+        window.selectWikiPage = function(id) {
+            selectedPageId = id;
+            const page = currentPages.find(p => p.id === id);
+            if (!page) return;
+
+            document.getElementById('wiki-title').innerText = page.title;
+            document.getElementById('wiki-author').innerText = `Author: ${page.authorName || 'Unknown'}`;
+            document.getElementById('wiki-content').innerHTML = parseWikiText(page.content);
+            
+            const editBtn = document.getElementById('btn-wiki-edit');
+            const lockMsg = document.getElementById('edit-lock-msg');
+
+            if (currentUser && page.uid === currentUser.uid) {
+                editBtn.style.display = 'inline-block';
+                lockMsg.style.display = 'none';
+            } else {
+                editBtn.style.display = 'none';
+                lockMsg.style.display = currentUser ? 'block' : 'none';
+            }
+            cancelEdit();
+        }
+
+        window.prepareNewPage = function() {
+            selectedPageId = null;
+            document.getElementById('edit-wiki-title').value = "";
+            document.getElementById('edit-wiki-content').value = "";
+            document.getElementById('wiki-view-mode').style.display = 'none';
+            document.getElementById('wiki-edit-mode').style.display = 'block';
+        }
+
+        window.enableEditMode = function() {
+            const page = currentPages.find(p => p.id === selectedPageId);
+            if (!page) return;
+            document.getElementById('edit-wiki-title').value = page.title;
+            document.getElementById('edit-wiki-content').value = page.content;
+            document.getElementById('wiki-view-mode').style.display = 'none';
+            document.getElementById('wiki-edit-mode').style.display = 'block';
+        }
+
+        window.cancelEdit = function() {
+            document.getElementById('wiki-view-mode').style.display = 'block';
+            document.getElementById('wiki-edit-mode').style.display = 'none';
+        }
+
+        window.saveWikiPage = async function() {
+            const title = document.getElementById('edit-wiki-title').value.trim();
+            const content = document.getElementById('edit-wiki-content').value.trim();
+            if (!title || !content) { alert("Required fields missing."); return; }
+            if (!currentUser) { alert("Authentication required."); return; }
+
+            try {
+                if (selectedPageId) {
+                    const page = currentPages.find(p => p.id === selectedPageId);
+                    if(page.uid !== currentUser.uid) { alert("Permission denied."); return; }
+                    await updateDoc(doc(db, "wiki", selectedPageId), { title, content });
+                } else {
+                    const docRef = await addDoc(collection(db, "wiki"), { 
+                        title, 
+                        content, 
+                        uid: currentUser.uid, 
+                        authorName: currentUser.displayName || 'Core Developer'
+                    });
+                    selectedPageId = docRef.id;
+                }
+                await loadWikiPages();
+                selectWikiPage(selectedPageId);
+            } catch (error) { alert("Save failed."); }
+        }
+    </script>
+
+    <script>
+        const features = [
+            { id: "minimal", name: "Mono UI Design", desc: "視覚的ノイズを極限まで排除したモノクロームパレット。アクリルガラスのような質感のGlassmorphismを採用し、洗練されたダークモードを表現。" },
+            { id: "modular", name: "Modular Architecture", desc: "コアロジックから完全に独立したコンポーネント設計。必要最小限のDOMツリーで構成され、不要なリソース消費を防ぎます。" },
+            { id: "fluid", name: "Fluid Layout", desc: "モバイル端末から超高解像度モニターまで対応するフルレスポンシブ。グリッドシステムとフレックスボックスのシームレスな融合。" },
+            { id: "eco", name: "Aesthetic Control", desc: "フォント、境界線の太さ、バックドロップフィルターの不透明度にいたるまで、NextHub固有のミニマリズム設計を精密にマッピング。" }
+        ];
+        function initFeatureNav() {
+            const nav = document.getElementById('nav-buttons');
+            features.forEach((f, index) => {
+                const div = document.createElement('div'); div.className = 'nav-item'; div.innerText = f.name;
+                div.onclick = () => updateDetail(index, div); nav.appendChild(div);
+                if(index === 0) updateDetail(0, div);
+            });
+        }
+        function updateDetail(index, el) {
+            const data = features[index];
+            document.querySelectorAll('#nav-buttons .nav-item').forEach(btn => btn.classList.remove('active'));
+            el.classList.add('active');
+            const content = document.getElementById('display-content');
+            document.getElementById('display-title').innerText = data.name;
+            document.getElementById('display-desc').innerText = data.desc;
+            content.classList.remove('fade-in'); void content.offsetWidth; content.classList.add('fade-in');
+        }
+        function renderView(mode) {
+            const target = document.getElementById('view-target'), bG = document.getElementById('btn-grid'), bL = document.getElementById('btn-list');
+            if(mode === 'grid') { 
+                bG.style.background = "#fff"; bG.style.color = "#000"; bG.style.fontWeight = "500";
+                bL.style.background = "transparent"; bL.style.color = "var(--text-main)"; bL.style.fontWeight = "400";
+            } else { 
+                bL.style.background = "#fff"; bL.style.color = "#000"; bL.style.fontWeight = "500";
+                bG.style.background = "transparent"; bG.style.color = "var(--text-main)"; bG.style.fontWeight = "400";
+            }
+            let html = "";
+            if(mode === 'grid') {
+                html = '<div id="grid-container">';
+                features.forEach(f => html += `<div class="grid-box"><h3>${f.name}</h3></div>`);
+                html += '</div>';
+            } else {
+                html = '<div style="margin-top: 25px;">';
+                features.forEach(f => html += `<div class="list-box"><strong>${f.name}</strong><span>Core Module</span></div>`);
+                html += '</div>';
+            }
+            target.innerHTML = html;
+        }
+        window.addEventListener('DOMContentLoaded', () => { initFeatureNav(); renderView('grid'); });
+    </script>
+</body>
+</html>
