@@ -90,7 +90,7 @@
 
         main { margin-top: 60px; }
         
-        /* ボタン */
+        /* ボタン基本 */
         .btn { 
             display: inline-block; 
             color: #000000; 
@@ -110,6 +110,51 @@
             transform: translateY(-1px);
         }
 
+        /* ─── Wiki生成コンポーネント用CSS ─── */
+        .btn-open {
+            display: inline-block;
+            color: #000000;
+            background-color: #ffffff;
+            padding: 10px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin: 12px 0;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        .btn-open:hover {
+            background-color: transparent;
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .wiki-display-content { font-size: 0.95rem; color: #e4e4e7; line-height: 1.8; }
+        
+        /* 画像のスタイル */
+        .wiki-display-content img { 
+            max-width: 100%; 
+            height: auto; 
+            border-radius: 12px; 
+            margin: 16px 0; 
+            display: block; 
+            border: 1px solid var(--border); 
+        }
+        
+        /* リストのスタイル */
+        .wiki-display-content ul { 
+            margin-left: 20px; 
+            margin-bottom: 16px; 
+            padding-left: 5px;
+        }
+        .wiki-display-content li { 
+            margin-bottom: 6px; 
+            list-style-type: square; 
+            color: #d4d4d8; 
+        }
+        
         /* セクション構造 */
         #top { 
             height: calc(100vh - 60px); 
@@ -247,11 +292,6 @@
         }
         .wiki-textarea { height: 260px; resize: vertical; line-height: 1.7; font-family: inherit; }
         
-        .wiki-display-content { font-size: 0.95rem; color: #e4e4e7; line-height: 1.8; }
-        .wiki-display-content img { max-width: 100%; height: auto; border-radius: 12px; margin: 20px 0; display: block; border: 1px solid var(--border); }
-        .wiki-display-content ul { margin-left: 20px; margin-bottom: 20px; }
-        .wiki-display-content li { margin-bottom: 6px; list-style-type: square; color: var(--text-sub); }
-        
         .wiki-separator { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; background: var(--bg-main); width: 100%; }
         .wiki-separator-title { background: var(--bg-input); padding: 12px 18px; font-weight: 500; font-size: 0.9rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
         .wiki-separator-title:hover { background: rgba(255,255,255,0.02); }
@@ -375,8 +415,11 @@
                             
                             <div class="wiki-help-box">
                                 <strong style="color: #fff; display: block; margin-bottom: 4px;">💡 構文ルール:</strong>
-                                <span style="display:block; margin-bottom: 2px;">🔹 <strong>**太字**</strong> | <em>*斜体*</em> | <del>~~打ち消し~~</del> | [img:画像URL]</span>
-                                <span>🔹 リスト: 行頭に <code>* </code> | 折りたたみ: <code>[title:題名]本文[end]</code> | コード: <code>```コード```</code></span>
+                                <span style="display:block; margin-bottom: 2px;">🔹 <strong>**太字**</strong> | <em>*斜体*</em> | <del>~~打ち消し~~</del></span>
+                                <span style="display:block; margin-bottom: 2px;">🔹 <strong>[open:ボタン名|URL]</strong> （新設：開くボタンの生成）</span>
+                                <span style="display:block; margin-bottom: 2px;">🔹 <strong>[img:画像URL]</strong> （新設：画像の組み込み）</span>
+                                <span style="display:block; margin-bottom: 2px;">🔹 リスト: 行頭に <code>* </code> （新設：自動箇条書き）</span>
+                                <span>🔹 折りたたみ: <code>[title:題名]本文[end]</code> | コード: <code>```コード```</code></span>
                             </div>
 
                             <div style="margin-top: 20px; text-align: left;">
@@ -447,26 +490,52 @@
             else { h.style.display = 'block'; w.style.display = 'none'; b.innerText = "HOME"; }
         }
 
+        /* ─── 改修されたパーサーロジック ─── */
         function parseWikiText(text) {
             if (!text) return "";
-            let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            html = html.replace(/```([\s\S]*?)```/g, '<div class="wiki-code-block">$1</div>');
-            html = html.replace(/\[title:(.+?)\]([\s\S]*?)\[end\]/g, (m, t, b) => `<div class="wiki-separator" onclick="this.classList.toggle('open'); event.stopPropagation();"><div class="wiki-separator-title">${t}</div><div class="wiki-separator-body">${b}</div></div>`);
-            html = html.replace(/\[img:(.+?)\]/g, '<img src="$1" alt="Wiki Image" loading="lazy">');
-            html = html.replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>').replace(/\*([\s\S]+?)\*/g, '<em>$1</em>').replace(/~~([\s\S]+?)~~/g, '<del>$1</del>');
             
+            // 安全のためにHTMLエスケープ
+            let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            
+            // 1. コードブロック処理
+            html = html.replace(/```([\s\S]*?)```/g, '<div class="wiki-code-block">$1</div>');
+            
+            // 2. 折りたたみ処理
+            html = html.replace(/\[title:(.+?)\]([\s\S]*?)\[end\]/g, (m, t, b) => `<div class="wiki-separator" onclick="this.classList.toggle('open'); event.stopPropagation();"><div class="wiki-separator-title">${t}</div><div class="wiki-separator-body">${b}</div></div>`);
+            
+            // 3. 【新設】「開く」ボタン処理 [open:テキスト|URL] を解析して安全にaタグ化
+            html = html.replace(/\[open:(.+?)\|(.+?)\]/g, '<a href="$2" target="_blank" class="btn-open">$1</a>');
+            
+            // 4. 【改修】画像処理 [img:URL]
+            html = html.replace(/\[img:(.+?)\]/g, '<img src="$1" alt="Wiki Image" loading="lazy">');
+            
+            // 5. 文字装飾
+            html = html.replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>')
+                       .replace(/\*([\s\S]+?)\*/g, '<em>$1</em>')
+                       .replace(/~~([\s\S]+?)~~/g, '<del>$1</del>');
+            
+            // 6. 【新設】行ごとのリスト判定（* ）と改行の同時処理
             let lines = html.split('\n'), inList = false;
             for (let i = 0; i < lines.length; i++) {
-                if (lines[i].trim().indexOf('* ') === 0) {
-                    let c = lines[i].replace(/^\s*\* /, '');
-                    lines[i] = !inList ? '<ul><li>' + c + '</li>' : '<li>' + c + '</li>';
+                let trimmed = lines[i].trim();
+                
+                if (trimmed.indexOf('* ') === 0) {
+                    let content = lines[i].replace(/^\s*\* /, '');
+                    lines[i] = !inList ? '<ul><li>' + content + '</li>' : '<li>' + content + '</li>';
                     inList = true;
                 } else {
-                    if (inList) { lines[i - 1] += '</ul>'; inList = false; }
-                    if (!lines[i].includes('</div>') && !lines[i].includes('</li>')) lines[i] += '<br>';
+                    if (inList) { 
+                        lines[i - 1] += '</ul>'; 
+                        inList = false; 
+                    }
+                    // 特殊タグを含まない通常のテキスト行には<br>を付与
+                    if (!lines[i].includes('</div>') && !lines[i].includes('</li>') && !lines[i].includes('<ul>') && !lines[i].includes('<img') && !lines[i].includes('class="btn-open"')) { 
+                        lines[i] += '<br>'; 
+                    }
                 }
             }
             if (inList) lines[lines.length - 1] += '</ul>';
+            
             return lines.join('\n');
         }
 
@@ -474,7 +543,6 @@
             const target = document.getElementById('wiki-page-list');
             target.innerHTML = "<p style='color:#888; font-size:14px;'>Syncing...</p>";
             try {
-                // コレクション名をNextHubドキュメントの共通構造として扱う（既存データ利用可）
                 const q = query(collection(db, "wiki"), orderBy("title", "asc"));
                 const snap = await getDocs(q);
                 currentPages = [];
