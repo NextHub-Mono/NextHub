@@ -716,4 +716,302 @@
             
             let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
             
-            html = html.replace(/```([\s\S]*?)
+            html = html.replace(/```([\s\S]*?)```/g, '<div class="wiki-code-block">$1</div>');
+            
+            html = html.replace(/\[title:(.+?)\]([\s\S]*?)\[end\]/g, (m, t, b) => `<div class="wiki-separator" onclick="this.classList.toggle('open'); event.stopPropagation();"><div class="wiki-separator-title">${t}</div><div class="wiki-separator-body">${b}</div></div>`);
+            
+            html = html.replace(/\[open:(.+?)\|(.+?)\]/g, '<a href="$2" target="_blank" class="btn-open">$1</a>');
+            
+            html = html.replace(/\[img:(.+?)\]/g, '<img src="$1" alt="Wiki Image" loading="lazy">');
+            
+            html = html.replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>')
+                       .replace(/\*([\s\S]+?)\*/g, '<em>$1</em>')
+                       .replace(/~~([\s\S]+?)~~/g, '<del>$1</del>');
+            
+            let lines = html.split('\n'), inList = false;
+            for (let i = 0; i < lines.length; i++) {
+                let trimmed = lines[i].trim();
+                
+                if (trimmed.indexOf('* ') === 0) {
+                    let content = lines[i].replace(/^\s*\* /, '');
+                    lines[i] = !inList ? '<ul><li>' + content + '</li>' : '<li>' + content + '</li>';
+                    inList = true;
+                } else {
+                    if (inList) { 
+                        lines[i - 1] += '</ul>'; 
+                        inList = false; 
+                    }
+                    if (!lines[i].includes('</div>') && !lines[i].includes('</li>') && !lines[i].includes('<ul>') && !lines[i].includes('<img') && !lines[i].includes('class="btn-open"')) { 
+                        lines[i] += '<br>'; 
+                    }
+                }
+            }
+            if (inList) lines[lines.length - 1] += '</ul>';
+            
+            return lines.join('\n');
+        }
+
+        async function loadWikiPages() {
+            const target = document.getElementById('wiki-page-list');
+            target.innerHTML = "<p style='color:#888; font-size:14px;'>Syncing...</p>";
+            try {
+                const q = query(collection(db, "wiki"), orderBy("title", "asc"));
+                const snap = await getDocs(q);
+                currentPages = [];
+                snap.forEach(d => currentPages.push({ id: d.id, ...d.data() }));
+                
+                // 新設: タグクラウドの動的生成
+                renderTagCloud();
+                // 記事リストのロード
+                applyFilters();
+            } catch (e) { target.innerHTML = "<p style='color:#ff4444;'>Sync failed</p>"; }
+        }
+
+        // 新設: 登録されている全てのユニークタグを集計して表示
+        function renderTagCloud() {
+            const tagContainer = document.getElementById('wiki-tag-list');
+            tagContainer.innerHTML = "";
+            
+            // 全記事から重複なしでタグを抽出
+            let allTags = new Set();
+            currentPages.forEach(p => {
+                if(p.tags && Array.isArray(p.tags)) {
+                    p.tags.forEach(t => allTags.add(t));
+                }
+            });
+
+            if(allTags.size === 0) return;
+
+            // 全て表示用のリセットタグ
+            const allBtn = document.createElement('span');
+            allBtn.className = 'wiki-tag' + (!activeFilterTag ? ' active' : '');
+            allBtn.innerText = "すべて";
+            allBtn.onclick = () => {
+                activeFilterTag = null;
+                renderTagCloud();
+                applyFilters();
+            };
+            tagContainer.appendChild(allBtn);
+
+            allTags.forEach(tag => {
+                const span = document.createElement('span');
+                span.className = 'wiki-tag' + (activeFilterTag === tag ? ' active' : '');
+                span.innerText = `# ${tag}`;
+                span.onclick = () => {
+                    if(activeFilterTag === tag) {
+                        activeFilterTag = null; // 既に選択中なら解除
+                    } else {
+                        activeFilterTag = tag;
+                    }
+                    renderTagCloud();
+                    applyFilters();
+                };
+                tagContainer.appendChild(span);
+            });
+        }
+
+        // 新設: 検索ワードと選択中タグの両方で記事リストを絞り込む関数
+        function applyFilters() {
+            const keyword = document.getElementById('wiki-search').value.toLowerCase();
+            let filtered = currentPages;
+
+            // タグによる絞り込み
+            if(activeFilterTag) {
+                filtered = filtered.filter(p => p.tags && p.tags.includes(activeFilterTag));
+            }
+
+            // キーワード入力による絞り込み
+            if(keyword) {
+                filtered = filtered.filter(p => 
+                    p.title.toLowerCase().includes(keyword) || 
+                    (p.content && p.content.toLowerCase().includes(keyword))
+                );
+            }
+
+            renderPageList(filtered);
+        }
+
+        function renderPageList(pages) {
+            const target = document.getElementById('wiki-page-list'); target.innerHTML = "";
+            if(pages.length === 0) { target.innerHTML = "<p style='color:#888; padding:10px; font-size:14px;'>No docs found.</p>"; return; }
+            pages.forEach(p => {
+                const div = document.createElement('div'); div.className = 'nav-item'; div.style.padding = '12px 20px'; div.innerText = p.title;
+                if(selectedPageId === p.id) div.classList.add('active');
+                div.onclick = () => selectWikiPage(p.id);
+                target.appendChild(div);
+            });
+        }
+
+        document.getElementById('wiki-search').addEventListener('input', () => {
+            applyFilters();
+        });
+
+        window.selectWikiPage = function(id) {
+            selectedPageId = id;
+            const page = currentPages.find(p => p.id === id);
+            if (!page) return;
+
+            document.getElementById('wiki-title').innerText = page.title;
+            document.getElementById('wiki-author').innerText = `Author: ${page.authorName || 'Unknown'}`;
+            document.getElementById('wiki-content').innerHTML = parseWikiText(page.content);
+            
+            // 新設: 詳細画面へのタグ描画
+            const detailTagContainer = document.getElementById('wiki-detail-tags');
+            detailTagContainer.innerHTML = "";
+            if (page.tags && Array.isArray(page.tags)) {
+                page.tags.forEach(t => {
+                    const s = document.createElement('span');
+                    s.className = 'wiki-tag';
+                    s.innerText = `# ${t}`;
+                    // 詳細画面のタグをクリックしてもそのタグで検索がかかるように調整
+                    s.onclick = () => {
+                        activeFilterTag = t;
+                        renderTagCloud();
+                        applyFilters();
+                    };
+                    detailTagContainer.appendChild(s);
+                });
+            }
+
+            const editBtn = document.getElementById('btn-wiki-edit');
+            const lockMsg = document.getElementById('edit-lock-msg');
+
+            if (currentUser && page.uid === currentUser.uid) {
+                editBtn.style.display = 'inline-block';
+                lockMsg.style.display = 'none';
+            } else {
+                editBtn.style.display = 'none';
+                lockMsg.style.display = currentUser ? 'block' : 'none';
+            }
+            cancelEdit();
+        }
+
+        window.prepareNewPage = function() {
+            selectedPageId = null;
+            document.getElementById('edit-wiki-title').value = "";
+            document.getElementById('edit-wiki-tags').value = ""; // 新設
+            document.getElementById('edit-wiki-content').value = "";
+            document.getElementById('wiki-view-mode').style.display = 'none';
+            document.getElementById('wiki-edit-mode').style.display = 'block';
+        }
+
+        window.enableEditMode = function() {
+            const page = currentPages.find(p => p.id === selectedPageId);
+            if (!page) return;
+            document.getElementById('edit-wiki-title').value = page.title;
+            // 新設: 配列をカンマ区切りの文字列に戻してインプットへ配置
+            document.getElementById('edit-wiki-tags').value = page.tags ? page.tags.join(', ') : "";
+            document.getElementById('edit-wiki-content').value = page.content;
+            document.getElementById('wiki-view-mode').style.display = 'none';
+            document.getElementById('wiki-edit-mode').style.display = 'block';
+        }
+
+        window.cancelEdit = function() {
+            document.getElementById('wiki-view-mode').style.display = 'block';
+            document.getElementById('wiki-edit-mode').style.display = 'none';
+        }
+
+        window.saveWikiPage = async function() {
+            const title = document.getElementById('edit-wiki-title').value.trim();
+            const tagInput = document.getElementById('edit-wiki-tags').value.trim(); // 新設
+            const content = document.getElementById('edit-wiki-content').value.trim();
+            if (!title || !content) { alert("Required fields missing."); return; }
+            if (!currentUser) { alert("Authentication required."); return; }
+
+            // 新設: 入力された文字列を分解・クリーニングして配列化
+            let tagsArray = [];
+            if(tagInput) {
+                tagsArray = tagInput.split(/[,,、]/).map(t => t.trim()).filter(t => t !== "");
+            }
+
+            try {
+                if (selectedPageId) {
+                    const page = currentPages.find(p => p.id === selectedPageId);
+                    if(page.uid !== currentUser.uid) { alert("Permission denied."); return; }
+                    await updateDoc(doc(db, "wiki", selectedPageId), { title, content, tags: tagsArray });
+                } else {
+                    const docRef = await addDoc(collection(db, "wiki"), { 
+                        title, 
+                        content, 
+                        tags: tagsArray, // 新設
+                        uid: currentUser.uid, 
+                        authorName: currentUser.displayName || 'Core Developer'
+                    });
+                    selectedPageId = docRef.id;
+                }
+                await loadWikiPages();
+                selectWikiPage(selectedPageId);
+            } catch (error) { alert("Save failed."); }
+        }
+    </script>
+
+    <script>
+        const features = [
+            { id: "minimal", name: "認知度", desc: "Nexthubを知ってる人がいない" },
+            { id: "modular", name: "サイトのUI", desc: "気に入る人と気に入らない人の差が激しい" },
+            { id: "fluid", name: "使いやすさ", desc: "初見の人からするとなんだこれwとしか思わない" },
+            { id: "eco", name: "アカウント", desc: "GoogleアカウントでNexthubにアカウント登録しないと共有できない" }
+        ];
+
+        function initFeatureNav() {
+            const nav = document.getElementById('nav-buttons');
+            features.forEach((f, index) => {
+                const div = document.createElement('div'); 
+                div.className = 'nav-item'; 
+                div.innerText = f.name;
+                div.onclick = () => updateDetail(index, div); 
+                nav.appendChild(div);
+                if(index === 0) updateDetail(0, div);
+            });
+        }
+
+        function updateDetail(index, el) {
+            const data = features[index];
+            document.querySelectorAll('#nav-buttons .nav-item').forEach(btn => btn.classList.remove('active'));
+            el.classList.add('active');
+            const content = document.getElementById('display-content');
+            document.getElementById('display-title').innerText = data.name;
+            document.getElementById('display-desc').innerText = data.desc;
+            content.classList.remove('fade-in'); 
+            void content.offsetWidth; 
+            content.classList.add('fade-in');
+        }
+
+        function renderView(mode) {
+            const target = document.getElementById('view-target'), bG = document.getElementById('btn-grid'), bL = document.getElementById('btn-list');
+            if(mode === 'grid') { 
+                bG.style.background = "#fff"; 
+                bG.style.color = "#000"; 
+                bG.style.fontWeight = "500";
+                bL.style.background = "transparent"; 
+                bL.style.color = "var(--text-main)"; 
+                bL.style.fontWeight = "400";
+            } else { 
+                bL.style.background = "#fff"; 
+                bL.style.color = "#000"; 
+                bL.style.fontWeight = "500";
+                bG.style.background = "transparent"; 
+                bG.style.color = "var(--text-main)"; 
+                bG.style.fontWeight = "400";
+            }
+            
+            let html = "";
+            if(mode === 'grid') {
+                html = '<div id="grid-container">';
+                features.forEach(f => html += `<div class="grid-box"><h3>${f.name}</h3></div>`);
+                html += '</div>';
+            } else {
+                html = '<div style="margin-top: 25px;">';
+                features.forEach(f => html += `<div class="list-box"><strong>${f.name}</strong><span>Core Module</span></div>`);
+                html += '</div>';
+            }
+            target.innerHTML = html;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => { 
+            initFeatureNav(); 
+            renderView('grid'); 
+        });
+    </script>
+</body>
+</html>
